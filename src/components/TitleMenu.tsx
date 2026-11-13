@@ -1,6 +1,6 @@
 import React from 'react';
 import { Play, Calendar, Trophy, BarChart2, Clock, Flame, Layers } from 'lucide-react';
-import { GameState, GameStats, DifficultyMode } from '../types';
+import { GameState, GameStats, DifficultyMode, LayoutMode } from '../types';
 
 interface TitleMenuProps {
   setCurrentView: (view: GameState) => void;
@@ -9,6 +9,8 @@ interface TitleMenuProps {
   onSelectDate: (dateStr: string) => void;
   difficulty: DifficultyMode;
   onSelectDifficulty: (mode: DifficultyMode) => void;
+  layoutMode: LayoutMode;
+  onChangeLayoutMode: (mode: LayoutMode) => void;
 }
 
 export const TitleMenu: React.FC<TitleMenuProps> = ({
@@ -18,6 +20,8 @@ export const TitleMenu: React.FC<TitleMenuProps> = ({
   onSelectDate,
   difficulty,
   onSelectDifficulty,
+  layoutMode,
+  onChangeLayoutMode,
 }) => {
   const isTodayNormalDone = !!stats.completedDays[todayDateStr];
   const isTodayHardDone = !!stats.completedHardDays?.[todayDateStr];
@@ -41,12 +45,46 @@ export const TitleMenu: React.FC<TitleMenuProps> = ({
       <p className="text-xs sm:text-sm font-bold uppercase tracking-[0.22em] text-[#581c6b] dark:text-amber-300/90 mb-3">
         Interactive TikTok LIVE Edition · Speed Scoreboard
       </p>
-      <p className="text-sm sm:text-base text-slate-600 dark:text-purple-100/80 max-w-xl mb-7 leading-relaxed">
+      <p className="text-sm sm:text-base text-slate-600 dark:text-purple-100/80 max-w-xl mb-5 leading-relaxed">
         Clear the stack of tiles by finding each 5-letter word before the auto-reveal timer runs out! Viewers in TikTok LIVE chat earn speed-based points on the running scoreboard and compete for the Top 5 Podium.
       </p>
 
+      {/* Tile Layout Feature Header & Pill Selector Bar (Placed ABOVE Play buttons as in original DeStack) */}
+      <div className="w-full max-w-xl mb-5 flex flex-col items-center">
+        <div className="text-[11px] font-extrabold text-amber-500 dark:text-amber-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+          <Layers className="w-3.5 h-3.5" />
+          <span>TILE LAYOUT · TODAY'S FEATURE: TWIN TOWERS</span>
+        </div>
+
+        <div className="w-full p-2.5 rounded-2xl bg-white/95 dark:bg-[#22072b]/95 border border-purple-200 dark:border-purple-800/60 shadow-sm flex flex-wrap items-center justify-center gap-1.5">
+          {(
+            [
+              { id: 'daily', label: 'Daily Auto' },
+              { id: 'pyramid', label: 'Diamond' },
+              { id: 'twin_towers', label: 'Towers' },
+              { id: 'cross_fortress', label: 'Fortress' },
+              { id: 'hourglass', label: 'Hourglass' },
+              { id: 'staircase', label: 'Cascade' },
+            ] as const
+          ).map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => onChangeLayoutMode(item.id)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer border whitespace-nowrap ${
+                layoutMode === item.id
+                  ? 'bg-[#2d0938] text-white border-[#2d0938] shadow-md'
+                  : 'bg-slate-100 dark:bg-purple-950/60 text-slate-700 dark:text-purple-200 border-slate-200 dark:border-purple-800/60 hover:border-amber-400'
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Difficulty Selector & Primary Start CTAs */}
-      <div className="flex flex-col sm:flex-row items-center gap-4 mb-8 w-full max-w-xl justify-center">
+      <div className="flex flex-col sm:flex-row items-center gap-4 mb-7 w-full max-w-xl justify-center">
         {/* Standard 4-Layer Mode Button */}
         <button
           onClick={() => {

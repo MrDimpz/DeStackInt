@@ -18,6 +18,7 @@ import {
   GameState,
   DifficultyMode,
   TimerDuration,
+  LayoutMode,
   RunningScoreboardPlayer,
   LiveChatItem,
 } from '../types';
@@ -70,6 +71,8 @@ interface GameBoardProps {
   }>;
   onConsumeChatQueue: () => void;
   resetSignal: number;
+  layoutMode: LayoutMode;
+  onChangeLayoutMode: (mode: LayoutMode) => void;
 }
 
 export const GameBoard: React.FC<GameBoardProps> = ({
@@ -94,6 +97,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   incomingChatQueue,
   onConsumeChatQueue,
   resetSignal,
+  layoutMode,
+  onChangeLayoutMode,
 }) => {
   const [tiles, setTiles] = useState<TileData[]>(() => JSON.parse(JSON.stringify(puzzle.tiles)));
   const [rack, setRack] = useState<Array<TileData | null>>([null, null, null, null, null]);
@@ -705,89 +710,35 @@ export const GameBoard: React.FC<GameBoardProps> = ({
             </div>
           </div>
 
-          {/* ================================================================= */}
-          {/* INTERACTIVE WORD REVEAL CONTROL TIMER BAR (30s / 45s / 60s)       */}
-          {/* ================================================================= */}
-          <div className="w-full mb-3 p-2.5 rounded-2xl bg-[#310a3d] dark:bg-[#16041c] border border-amber-400/35 shadow-lg">
-            <div className="flex items-center justify-between gap-2 mb-2">
-              {/* 30s / 45s / 60s Selector Pills */}
-              <div className="flex items-center gap-1">
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-300 flex items-center gap-1 mr-1">
-                  <Timer className="w-3.5 h-3.5 text-amber-400" />
-                  Timer:
-                </span>
-                {([30, 45, 60] as TimerDuration[]).map((sec) => (
-                  <button
-                    key={sec}
-                    type="button"
-                    onClick={() => handleSelectTimerDuration(sec)}
-                    className={`px-2.5 py-1 rounded-lg font-mono text-xs font-extrabold transition-all cursor-pointer ${
-                      timerDuration === sec
-                        ? 'bg-amber-400 text-[#2d0938] shadow-sm scale-105'
-                        : 'bg-white/10 text-purple-200 hover:bg-white/15'
-                    }`}
-                  >
-                    {sec}s
-                  </button>
-                ))}
-              </div>
-
-              {/* Countdown Readout + Pause/Play + Reveal Next Word Now */}
-              <div className="flex items-center gap-1.5">
-                <span
-                  className={`font-mono font-black text-sm px-2 py-0.5 rounded-lg border tabular-nums ${
-                    wordTimeLeft <= 5
-                      ? 'bg-rose-500/30 border-rose-400 text-rose-200 animate-pulse'
-                      : 'bg-black/40 border-amber-400/30 text-amber-300'
+          {/* Layout Mode Selector Bar */}
+          <div className="w-full flex items-center justify-between gap-1 mb-2.5 px-1 overflow-x-auto py-0.5">
+            <span className="text-[10px] font-extrabold text-amber-300 uppercase tracking-wider shrink-0 flex items-center gap-1">
+              <Layers className="w-3 h-3 text-amber-400" /> Layout:
+            </span>
+            <div className="flex items-center gap-1">
+              {(
+                [
+                  { id: 'daily', label: 'Daily' },
+                  { id: 'pyramid', label: 'Diamond' },
+                  { id: 'twin_towers', label: 'Towers' },
+                  { id: 'cross_fortress', label: 'Fortress' },
+                  { id: 'hourglass', label: 'Hourglass' },
+                  { id: 'staircase', label: 'Cascade' },
+                ] as const
+              ).map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => onChangeLayoutMode(item.id)}
+                  className={`px-2 py-1 rounded-md text-[10px] font-extrabold transition-all cursor-pointer border whitespace-nowrap ${
+                    layoutMode === item.id
+                      ? 'bg-amber-400 text-[#2d0938] border-amber-300 shadow-sm'
+                      : 'bg-black/30 text-purple-200 border-white/10 hover:border-amber-400'
                   }`}
                 >
-                  {wordTimeLeft}s
-                </span>
-
-                <button
-                  type="button"
-                  onClick={() => setIsTimerPaused((p) => !p)}
-                  title={isTimerPaused ? 'Resume Auto-Reveal Timer' : 'Pause Auto-Reveal Timer'}
-                  className="p-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-amber-300 cursor-pointer"
-                >
-                  {isTimerPaused ? (
-                    <Play className="w-3.5 h-3.5 fill-current" />
-                  ) : (
-                    <Pause className="w-3.5 h-3.5 fill-current" />
-                  )}
+                  {item.label}
                 </button>
-
-                <button
-                  type="button"
-                  onClick={() => revealCurrentWordOnBoard('manual_button')}
-                  title="Reveal Next Word Immediately"
-                  className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-amber-300 to-amber-500 hover:brightness-105 text-[#2d0938] font-extrabold text-[11px] flex items-center gap-1 cursor-pointer shadow-sm"
-                >
-                  <FastForward className="w-3 h-3 fill-current" />
-                  <span>Reveal</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Smooth Progress Bar */}
-            <div className="w-full h-2 rounded-full bg-black/50 overflow-hidden">
-              <div
-                style={{ width: `${timerPct}%` }}
-                className={`h-full transition-all duration-500 rounded-full ${
-                  wordTimeLeft <= 5
-                    ? 'bg-gradient-to-r from-rose-500 to-amber-500'
-                    : 'bg-gradient-to-r from-amber-300 via-amber-400 to-emerald-400'
-                }`}
-              />
-            </div>
-
-            <div className="flex items-center justify-between mt-1.5 text-[10px] font-mono text-purple-200/80">
-              <span>
-                Next word auto-reveals in <strong className="text-amber-300">{wordTimeLeft}s</strong>
-              </span>
-              <span className="text-emerald-300 font-bold">
-                {currentWordSolvers.length} chat {currentWordSolvers.length === 1 ? 'solver' : 'solvers'} locked in
-              </span>
+              ))}
             </div>
           </div>
 
@@ -937,7 +888,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         {/* ===================================================================== */}
         {/* RIGHT COLUMN (7 cols on lg): Running Scoreboard + Live TikTok Chat    */}
         {/* ===================================================================== */}
-        <div className="lg:col-span-7 w-full">
+        <div className="lg:col-span-7 w-full flex flex-col gap-4">
           <TikTokLivePanel
             tiktokUsername={tiktokUsername}
             isConnected={isLiveConnected}
@@ -953,6 +904,85 @@ export const GameBoard: React.FC<GameBoardProps> = ({
             onSimulateChat={onSimulateChat}
             onSimulateWave={handleSimulateWave}
           />
+
+          {/* Word Reveal Timer & Control Section (Moved below scoreboard and chat box) */}
+          <div className="w-full p-4 rounded-2xl bg-[#2c0938]/95 dark:bg-[#16041c]/95 border border-purple-400/25 shadow-[0_8px_24px_rgba(0,0,0,0.4)] flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="relative w-12 h-12 rounded-2xl bg-amber-400/20 border border-amber-300/40 flex items-center justify-center text-amber-300 font-black font-mono text-lg shrink-0">
+                {wordTimeLeft}s
+                <svg className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none" viewBox="0 0 36 36">
+                  <path
+                    className="text-amber-500/20"
+                    strokeWidth="3"
+                    stroke="currentColor"
+                    fill="none"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                  <path
+                    className="text-amber-400 transition-all duration-1000"
+                    strokeDasharray={`${timerPct}, 100`}
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    stroke="currentColor"
+                    fill="none"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                </svg>
+              </div>
+
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-extrabold text-white uppercase tracking-wider flex items-center gap-1">
+                    <Timer className="w-3.5 h-3.5 text-amber-300" /> Reveal Timer
+                  </span>
+                  <div className="flex items-center gap-1 bg-black/30 p-0.5 rounded-lg border border-purple-400/20">
+                    {([30, 45, 60] as const).map((d) => (
+                      <button
+                        key={d}
+                        type="button"
+                        onClick={() => handleSelectTimerDuration(d)}
+                        className={`px-2 py-0.5 rounded text-[10px] font-extrabold transition-all cursor-pointer ${
+                          timerDuration === d
+                            ? 'bg-amber-400 text-[#2d0938] shadow-sm'
+                            : 'text-purple-200 hover:text-white'
+                        }`}
+                      >
+                        {d}s
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <p className="text-[11px] text-purple-200/75 mt-0.5">
+                  Auto-reveals Word #{currentWordIndex + 1} ({targetWord}) when countdown ends. Chat scores speed points!
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end">
+              <button
+                type="button"
+                onClick={() => setIsTimerPaused(!isTimerPaused)}
+                className={`p-2.5 rounded-xl border text-xs font-extrabold flex items-center gap-1.5 transition-all cursor-pointer ${
+                  isTimerPaused
+                    ? 'bg-amber-400 text-[#2d0938] border-amber-300'
+                    : 'bg-white/10 hover:bg-white/15 text-purple-100 border-white/15'
+                }`}
+                title={isTimerPaused ? 'Resume Timer' : 'Pause Timer'}
+              >
+                {isTimerPaused ? <Play className="w-4 h-4 fill-current" /> : <Pause className="w-4 h-4 fill-current" />}
+                <span className="sm:hidden">{isTimerPaused ? 'Resume' : 'Pause'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => revealCurrentWordOnBoard('manual_button')}
+                className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-[#2d0938] font-black text-xs uppercase tracking-wider shadow-[0_4px_0_#9a6614] active:translate-y-0.5 transition-all flex items-center gap-1.5 cursor-pointer flex-1 sm:flex-initial justify-center"
+              >
+                <FastForward className="w-4 h-4" />
+                <span>Reveal Next Word</span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -221,11 +221,39 @@ async function setupViteOrStatic() {
     const vite = await createViteServer({
       server: {
         middlewareMode: true,
-        hmr: false,
+        hmr: {
+          server: httpServer,
+        },
         watch: process.env.DISABLE_HMR === "true" ? null : {},
       },
       appType: "spa"
     });
+
+    // Guard @vite/client against throwing unhandled WebSocket errors when HMR is disabled by the preview proxy
+    app.use((req, res, next) => {
+      if (req.url && req.url.startsWith("/@vite/client")) {
+        const origEnd = res.end.bind(res);
+        const chunks: Buffer[] = [];
+        res.write = ((chunk: any) => {
+          chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk)));
+          return true;
+        }) as any;
+        res.end = ((chunk?: any) => {
+          if (chunk) {
+            chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk)));
+          }
+          let body = Buffer.concat(chunks).toString("utf8");
+          body = body.replace(
+            "transport.connect(createHMRHandler(handleMessage));",
+            "if (false) transport.connect(createHMRHandler(handleMessage)).catch(() => {});"
+          );
+          res.setHeader("Content-Length", Buffer.byteLength(body, "utf8"));
+          return origEnd(body);
+        }) as any;
+      }
+      next();
+    });
+
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(__dirname, "dist");

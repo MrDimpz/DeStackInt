@@ -5,6 +5,7 @@ import {
   GameStats,
   DifficultyMode,
   TimerDuration,
+  LayoutMode,
   RunningScoreboardPlayer,
   LiveChatItem,
 } from './types';
@@ -39,6 +40,7 @@ export default function App() {
   const [todayDateStr] = useState<string>(() => getLondonDateString());
   const [selectedDateStr, setSelectedDateStr] = useState<string>(() => getLondonDateString());
   const [difficulty, setDifficulty] = useState<DifficultyMode>('normal');
+  const [layoutMode, setLayoutMode] = useState<LayoutMode>('daily');
   const [timerDuration, setTimerDuration] = useState<TimerDuration>(30);
 
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
@@ -365,7 +367,7 @@ export default function App() {
     setChatFeed([]);
   }, []);
 
-  const currentPuzzle = generateDailyPuzzle(selectedDateStr, difficulty);
+  const currentPuzzle = generateDailyPuzzle(selectedDateStr, difficulty, layoutMode);
 
   const handleVictory = (
     timeSeconds: number,
@@ -459,6 +461,8 @@ export default function App() {
             onSelectDate={(date) => setSelectedDateStr(date)}
             difficulty={difficulty}
             onSelectDifficulty={(mode) => setDifficulty(mode)}
+            layoutMode={layoutMode}
+            onChangeLayoutMode={setLayoutMode}
           />
         )}
 
@@ -467,6 +471,8 @@ export default function App() {
             puzzle={currentPuzzle}
             difficulty={difficulty}
             onChangeDifficulty={(mode) => setDifficulty(mode)}
+            layoutMode={layoutMode}
+            onChangeLayoutMode={setLayoutMode}
             onVictory={handleVictory}
             setCurrentView={setCurrentView}
             onOpenHowToPlay={() => setShowHowToPlay(true)}
