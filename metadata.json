@@ -1,0 +1,8 @@
+{
+  "name": "DeStack Live",
+  "description": "An interactive TikTok LIVE daily word stacking and unstacking puzzle game with 30/45/60s auto-reveal timers, speed-based chat scoring, running scoreboard, and Top 5 podium.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
